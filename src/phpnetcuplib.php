@@ -476,7 +476,7 @@ class phpnetcuplib
             "apisessionid" => $this->getSessionID()
         ];
 
-        $resultArray = $this->performAction("deleteHandle", $params);
+        $resultArray = $this->performAction("listallHandle", $params);
 
         if ($resultArray["status"] !== "success") {
             $this->setErrorMessage($resultArray["shortmessage"], $resultArray["longmessage"]);
@@ -484,6 +484,29 @@ class phpnetcuplib
         }
         return $resultArray;
     }
+
+    /**
+     * Get Information about a handle.
+     * @return array|false netcup response or false
+     */
+    public function infoHandle(int $handleId) {
+        $params = [
+            "customernumber" => $this->getCustomerNumber(),
+            "apikey" => $this->getApiKey(),
+            "apisessionid" => $this->getSessionID(),
+            "handle_id" => $handleId
+        ];
+
+        $resultArray = $this->performAction("infoHandle", $params);
+
+        if ($resultArray["status"] !== "success") {
+            $this->setErrorMessage($resultArray["shortmessage"], $resultArray["longmessage"]);
+            return false;
+        }
+        return $resultArray;
+    }
+
+
 
     public function createDomain(string $domainName, array $nameserver, array $contacts) {
         $nameserverId = 1;
