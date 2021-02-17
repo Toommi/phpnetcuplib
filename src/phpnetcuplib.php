@@ -75,10 +75,12 @@ class phpnetcuplib
      */
     static public function checkDomainAvailability(string $domain): bool
     {
-        if (gethostbyname($domain) != $domain) {
-            return false;
+        $soa = dns_get_record($domain, DNS_SOA);
+        if (empty($soa)) {
+            return true;
         }
-        return true;
+
+        return false;
     }
 
     /**
@@ -254,6 +256,28 @@ class phpnetcuplib
         ];
 
         $resultArray = $this->performAction("infoDomain", $params);
+
+        if ($resultArray["status"] !== "success") {
+            $this->setErrorMessage($resultArray["shortmessage"], $resultArray["longmessage"]);
+            return false;
+        }
+        return $resultArray;
+    }
+    /**
+     * @param string $domain
+     * @return array
+     */
+    public function priceTopleveldomain(string $domain)
+    {
+        $params = [
+            "apikey" => $this->getApiKey(),
+            "apipassword" => $this->getApiPassword(),
+            "customernumber" => $this->getCustomerNumber(),
+            "apisessionid" => $this->getSessionID(),
+            "topleveldomain" => $domain
+        ];
+
+        $resultArray = $this->performAction("priceTopleveldomain", $params);
 
         if ($resultArray["status"] !== "success") {
             $this->setErrorMessage($resultArray["shortmessage"], $resultArray["longmessage"]);
@@ -540,4 +564,36 @@ class phpnetcuplib
         return true;
     }
 
+    public function transferDomain(string $domainName, array $nameserver, array $contacts, string $authcode) {
+        $nameserverId = 1;
+        $nameserverArray = [];
+
+        foreach ($nameserver as $nameserverItem) {
+            $nameserverArray["nameserver" . $nameserverId]["hostname"] = $nameserverItem->getHostname();
+            $nameserverArray["nameserver" . $nameserverId]["ipv4"] = $nameserverItem->getIPv4();
+            $nameserverArray["nameserver" . $nameserverId]["ipv6"] = $nameserverItem->getIPv6();
+
+            $nameserverId++;
+            if($nameserverId > 8)
+                throw new Exception("Too many nameserver");
+        }
+
+        $params = [
+            "domainname" => $domainName,
+            "customernumber" => $this->getCustomerNumber(),
+            "contacts" => $contacts,
+            "nameservers" => $nameserverArray,
+            "authcode" => $authcode,
+            "apikey" => $this->getApiKey(),
+            "apisessionid" => $this->getSessionID()
+        ];
+
+        $resultArray = $this->performAction("transferDomain", $params);
+
+        if ($resultArray["status"] !== "success") {
+            $this->setErrorMessage($resultArray["shortmessage"], $resultArray["longmessage"]);
+            return false;
+        }
+        return true;
+    }
 }
